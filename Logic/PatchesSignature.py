@@ -2,6 +2,7 @@ import json
 from datetime import datetime
 
 from Logic.Cryptography import Cryptography
+from Logic.Sort import Sort
 
 class PatchesSignature:
     @staticmethod
@@ -26,13 +27,67 @@ class PatchesSignature:
             # If the file does not exist then set the timestamp to the current time
             stamp = int(round(datetime.timestamp(datetime.now()) * 1000, 0))
 
+        lastInsert = int(round(datetime.timestamp(datetime.now()) * 1000, 0))
+
         # Update the timestamp and signature in patches.signature.json
         with open('patches.signature.json', 'w') as f:
             json.dump({
                 'timestamp': stamp,
+                'lastLocalInsert': lastInsert,
                 'signature': Cryptography.hashFile('patches.json')
             }, f)
 
     @staticmethod
     def updateSignatureWithSort() -> None:
-        pass
+        # Get the patches from patches.json
+        with open('patches.json', 'r') as f:
+            patches = json.load(f)['patches']
+
+        # Get the timestamp from patches.signature.json
+        with open('patches.signature.json', 'r') as f:
+            signature = json.load(f)
+
+        # If both timestamps are the same then sort all patches as the original signature was blank
+        if signature['timestamp'] == signature['lastLocalInsert']:
+            patches = Sort.patch(patches)
+        else:
+            # Use the timestamps to find the cutoff point for the patches
+            cutoff = None
+            for patch in patches:
+                # first find the cutoff for the last local insert
+                if int(bytes.fromhex(patch['id'].split('-')[0]).decode('utf-8')) == signature['lastLocalInsert']:
+                    cutoff = patches.index(patch)
+
+            # Now from this point use the timestamp to find the cutoff for the signature
+            for oldPatch in patches[cutoff:]:
+                if int(bytes.fromhex(oldPatch['id'].split('-')[0]).decode('utf-8')) <= signature['timestamp']:
+                    cutoff = patches.index(oldPatch)
+                    break
+
+            # Ensure that a cutoff was found
+            if cutoff is None:
+                raise Exception('Malformed Patches: could not find cutoff for patches!')
+
+            newPatches = patches[:cutoff]
+
+            # Sort the patches, starting with the patches which are not larger than the original signature timestamp
+            insertPatches = Sort.patchWithInsert(newPatches, patches[cutoff:], signature['timestamp'])
+
+            newPatches = Sort.patch(patches[:cutoff])
+
+            # Prepend the new patches to the sorted patches
+            patches = newPatches + insertPatches
+
+            # Update the patches.json file
+            with open('patches.json', 'w') as f:
+                json.dump({
+                    'patches': patches
+                }, f)
+
+            # Update the signature
+            with open('patches.signature.json', 'w') as f:
+                json.dump({
+                    'timestamp': int(round(datetime.timestamp(datetime.now()) * 1000, 0)),
+                    'lastLocalInsert': int(bytes.fromhex(patches[0]['id'].split('-')[0]).decode('utf-8')),
+                    'signature': Cryptography.hashFile('patches.json')
+                }, f)
