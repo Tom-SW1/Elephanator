@@ -1,0 +1,11 @@
+# JetBrains IDE files
+.idea
+
+# Python virtual environment
+venv
+
+# Patch signature
+patches.signature.json
+
+# Settings for the app
+appsettings.json
