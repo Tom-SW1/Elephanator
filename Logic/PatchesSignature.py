@@ -1,5 +1,6 @@
 import json
 from datetime import datetime
+from typing import Union
 
 from Logic.Cryptography import Cryptography
 from Logic.Sort import Sort
@@ -7,6 +8,10 @@ from Logic.Sort import Sort
 class PatchesSignature:
     @staticmethod
     def hasDifferentSignature() -> bool:
+        """
+        Compares the signature in patches.signature.json with the current signature of patches.json
+        :return:
+        """
         # Get the signature from patches.signature.json
         with open('patches.signature.json', 'r') as f:
             signature = json.load(f)['signature']
@@ -18,7 +23,11 @@ class PatchesSignature:
         return signature != newSignature
 
     @staticmethod
-    def updateSignature() -> None:
+    def updateSignature(lastInsert: Union[int, None] = None) -> None:
+        """
+        Updates the signature and timestamps in patches.signature.json
+        :return:
+        """
         try:
             # Get the timestamp from patches.signature.json
             with open('patches.signature.json', 'r') as f:
@@ -27,7 +36,9 @@ class PatchesSignature:
             # If the file does not exist then set the timestamp to the current time
             stamp = int(round(datetime.timestamp(datetime.now()) * 1000, 0))
 
-        lastInsert = int(round(datetime.timestamp(datetime.now()) * 1000, 0))
+        # If the last insert is None then set it to the current timestamp
+        if lastInsert is None:
+            lastInsert = int(round(datetime.timestamp(datetime.now()) * 1000, 0))
 
         # Update the timestamp and signature in patches.signature.json
         with open('patches.signature.json', 'w') as f:
@@ -39,6 +50,10 @@ class PatchesSignature:
 
     @staticmethod
     def updateSignatureWithSort() -> None:
+        """
+        Updates the signature and sorts new patches
+        :return:
+        """
         # Get the patches from patches.json
         with open('patches.json', 'r') as f:
             patches = json.load(f)['patches']
@@ -53,16 +68,18 @@ class PatchesSignature:
         else:
             # Use the timestamps to find the cutoff point for the patches
             cutoff = None
+            # first find the cutoff for the last local insert
             for patch in patches:
-                # first find the cutoff for the last local insert
                 if int(bytes.fromhex(patch['id'].split('-')[0]).decode('utf-8')) == signature['lastLocalInsert']:
                     cutoff = patches.index(patch)
 
-            # Now from this point use the timestamp to find the cutoff for the signature
-            for oldPatch in patches[cutoff:]:
-                if int(bytes.fromhex(oldPatch['id'].split('-')[0]).decode('utf-8')) <= signature['timestamp']:
-                    cutoff = patches.index(oldPatch)
-                    break
+            # Now from this point use the timestamp to find the cutoff for the signature, but only run if the
+            # timestamp is less than the local insert timestamp
+            if signature['timestamp'] < signature['lastLocalInsert']:
+                for patch in patches[cutoff:]:
+                    if int(bytes.fromhex(patch['id'].split('-')[0]).decode('utf-8')) <= signature['timestamp']:
+                        cutoff = patches.index(patch)
+                        break
 
             # Ensure that a cutoff was found
             if cutoff is None:
