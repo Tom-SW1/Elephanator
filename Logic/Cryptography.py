@@ -10,7 +10,7 @@ class Cryptography:
         Gets the current timestamp in milliseconds and converts it to hex to form an ID
         :return: A hex of current datetime
         """
-        timestamp = hex(int(datetime.timestamp() * 1000))
+        timestamp = hex(int(datetime.timestamp(datetime.now()) * 1000))[2:]
 
         return f'{timestamp}'
 

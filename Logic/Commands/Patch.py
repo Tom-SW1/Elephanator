@@ -12,10 +12,13 @@ class Patch:
         """
         Adds a new patch to the patches directory
         :param data: The data to add the patch
-        :return: None
+        :return:
         """
         # Format the arguments, also validates the arguments using the schema
         args = ArgumentFactory.format(AddPatchSchema.schema, data['arguments'])
+
+        # Remove whitespace from the name
+        args['name'] = args['name'].replace(' ', '_')
 
         # Check if the patch already exists
         patch = ArgumentFactory.locatePatch(args['name'])
@@ -23,7 +26,7 @@ class Patch:
             raise Exception(f'Patch directory already exists: {args["name"]} -> {patch}')
 
         # Create an ID for the patch
-        identifier = f'{Cryptography.createID}-{args["name"]}'
+        identifier = f'{Cryptography.createID()}-{args["name"]}'
 
         # Create the patch directory
         os.makedirs(f'patches/{identifier}')
@@ -33,7 +36,7 @@ class Patch:
             patches = json.load(f)
             patches['patches'].append({
                 'id': identifier,
-                'dependencies': args['dependencies']
+                'dependencies': []
             })
 
         with open('patches.json', 'w') as f:

@@ -3,6 +3,7 @@ import sys
 import os
 
 from Logic.PatchesSignature import PatchesSignature
+from Logic.Commands.Patch import Patch
 
 # Configuration checks start here
 
@@ -37,21 +38,34 @@ args = sys.argv
 
 # Map the operation and arguments onto a dictionary
 data = {
-    'operation': args[0].strip('-').lower(),
+    'operation': None,
     'arguments': {}
 }
 
 lastKey = None
 for i in range(1, len(args)):
     try:
-        # If the value starts with -- then it is a key, so add it to the dictionary
-        if args[i].startswith('--'):
-            lastKey = args[i].strip('-').lower()
-            data['arguments'][lastKey] = []
-        # Otherwise, add the value to the last key
+        # If the file ends with .py then ignore it
+        if args[i].endswith('.py'):
+            continue
         else:
-            data['arguments'][lastKey].append(args[i])
-    except IndexError:
+            # If the operation is None then set it to the current argument
+            if data['operation'] is None:
+                data['operation'] = args[i].strip('-').lower()
+            # Otherwise process it as an argument
+            else:
+                # If the value starts with -- then it is a key, so add it to the dictionary
+                if args[i].startswith('--'):
+                    lastKey = args[i].strip('-').lower()
+                    data['arguments'][lastKey] = []
+                # Otherwise, add the value to the last key
+                else:
+                    data['arguments'][lastKey].append(args[i])
+    except:
         raise Exception('Invalid arguments: Arguments must be in the form of --key value')
 
 # Route the operation to the appropriate function
+
+print(data)
+if data['operation'] == 'addpatch':
+    Patch.add(data)

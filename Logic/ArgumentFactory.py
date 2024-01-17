@@ -4,10 +4,50 @@ from typing import Union
 
 from Logic.Search import Search
 
+
 class ArgumentFactory:
     @staticmethod
-    def format(schema: dict[str, dict[Union[type[any], bool]]], args: dict[list[str]]) -> dict:
-        pass
+    def format(schema: dict[str, dict[Union[type[any], bool]]], args: dict[str, any]) -> dict:
+        """
+        Formats the arguments using the schema
+        :param schema: The schema to use
+        :param args: The arguments to format
+        :return: The formatted arguments
+        """
+        for item in schema:
+            if item in args:
+                for point in args[item]:
+                    # Check if the data is a string
+                    if schema[item]['type'] == str:
+                        # Combine the data into a string
+                        if type(args[item]) == list:
+                            args[item] = f'{point}'
+                        else:
+                            args[item] = f'{args[item]} {point}'
+                    # Check if the data is a integer
+                    elif schema[item]['type'] == int:
+                        # Combine the data into a integer
+                        # If the data is still a list then set it to a int first
+                        try:
+                            if type(args[item]) == list:
+                                args[item] = int(point)
+                            # Add any subsequent data to the integer
+                            else:
+                                args[item] += int(point)
+                        except:
+                            raise Exception(f'Invalid Argument: {item} must be a integer')
+                    # Check if the data is a list of strings
+                    elif schema[item]['type'] == list[str]:
+                        break
+                    else:
+                        raise Exception(f'Invalid Argument: {item} must be a string, list of strings or an integer')
+            else:
+                # Check if the argument is required
+                if schema[item]['required']:
+                    raise Exception(f'Invalid Argument: {item} is required')
+
+        # Return the formatted arguments
+        return args
 
     @staticmethod
     def locatePatch(name: str) -> Union[str, None]:

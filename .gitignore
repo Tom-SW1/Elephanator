@@ -1,8 +1,10 @@
 # JetBrains IDE files
 .idea
 
-# Python virtual environment
+# Python virtual environment & cache
 venv
+__pycache__
+*.pyc
 
 # Patch signature
 patches.signature.json
