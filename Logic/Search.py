@@ -4,7 +4,14 @@ from typing import Union
 
 class Search:
     @staticmethod
-    def forInsert(patches: list[dict[str, Union[str, list[str]]]], stamp: int) -> tuple[int, int]:
+    def forInsert(patches: list[dict[str, Union[str, list[str]]]], stamp: int) -> Union[tuple[dict[str, Union[str,
+    list[str]]], dict[str, Union[str, list[str]]]], None]:
+        """
+        Searches for the range of patches to insert a new patch into
+        :param patches: The patches to search
+        :param stamp: The timestamp of the new patch
+        :return: The two patches to insert the new patch between
+        """
         midpoint = int(math.ceil(len(patches) / 2))
 
         # Get the patch at the midpoint and its timestamp
@@ -24,8 +31,10 @@ class Search:
             return Search.forInsert(patches, stamp)
         # If there are two patches left then we can return that as our range
         elif len(patches) == 2:
-            return (int(bytes.fromhex(patches[0]['id'].split('-')[0]).decode('utf-8')),
-                    int(bytes.fromhex(patches[1]['id'].split('-')[0]).decode('utf-8')))
+            return patches[0], patches[1]
+        # If there is just one patch left then we return None as it goes to the end of the list
+        elif len(patches) == 1:
+            return None
 
     @staticmethod
     def forPatch(patches: list[dict[str, Union[str, list[str]]]], stamp: int) -> Union[

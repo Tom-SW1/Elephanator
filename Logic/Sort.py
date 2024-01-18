@@ -52,10 +52,14 @@ class Sort:
             # If the is less than the original signature timestamp then insert it into the existing patches
             if newStamp < stamp:
                 # Get the range of the existing patches to search
-                position = Search.forInsert(patches.copy(), newStamp)
+                patch = Search.forInsert(patches.copy(), newStamp)
 
+                # Check if the patch should be appended to the end of the existing patches
+                if patch is None:
+                    existingPatches.append(newPatch)
                 # Insert the new patch into the existing patches
-                existingPatches.insert(position[1], newPatch)
+                else:
+                    existingPatches.insert(existingPatches.index(patch[1]), newPatch)
 
                 # Remove the new patch from the new patches
                 newPatches.remove(newPatch)

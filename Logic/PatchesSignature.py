@@ -95,16 +95,16 @@ class PatchesSignature:
             # Prepend the new patches to the sorted patches
             patches = newPatches + insertPatches
 
-            # Update the patches.json file
-            with open('patches.json', 'w') as f:
-                json.dump({
-                    'patches': patches
-                }, f)
+        # Update the patches.json file
+        with open('patches.json', 'w') as f:
+            json.dump({
+                'patches': patches
+            }, f)
 
-            # Update the signature
-            with open('patches.signature.json', 'w') as f:
-                json.dump({
-                    'timestamp': int(round(datetime.timestamp(datetime.now()) * 1000, 0)),
-                    'lastLocalInsert': int(bytes.fromhex(patches[0]['id'].split('-')[0]).decode('utf-8')),
-                    'signature': Cryptography.hashFile('patches.json')
-                }, f)
+        # Update the signature
+        with open('patches.signature.json', 'w') as f:
+            json.dump({
+                'timestamp': int(round(datetime.timestamp(datetime.now()) * 1000, 0)),
+                'lastLocalInsert': int(bytes.fromhex(patches[0]['id'].split('-')[0]).decode('utf-8')),
+                'signature': Cryptography.hashFile('patches.json')
+            }, f)
