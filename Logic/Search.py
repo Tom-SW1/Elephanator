@@ -1,6 +1,7 @@
 import math
 from typing import Union
 
+from Logic.Conversion import Conversion
 
 class Search:
     @staticmethod
@@ -12,56 +13,59 @@ class Search:
         :param stamp: The timestamp of the new patch
         :return: The two patches to insert the new patch between
         """
-        midpoint = int(math.ceil(len(patches) / 2))
+        midpoint = int(math.ceil(len(patches) / 2)) - 1
 
         # Get the patch at the midpoint and its timestamp
         patch = patches[midpoint]
-        timestamp = int(bytes.fromhex(patch['id'].split('-')[0]).decode('utf-8'))
+        timestamp = Conversion.fromHexPatchStamp(patch['id'])
 
         # If the timestamp is equal to the stamp then there is a conflict
         if timestamp == stamp:
             raise Exception(f'Patch Conflict: {patch["id"]} already uses this timestamp!')
-        # If the timestamp is less than the stamp then search the right side of the list
-        elif timestamp < stamp:
-            patches = patches[midpoint:]
-            return Search.forInsert(patches, stamp)
-        # If the timestamp is greater than the stamp then search the left side of the list
-        elif timestamp > stamp:
-            patches = patches[:midpoint]
-            return Search.forInsert(patches, stamp)
         # If there are two patches left then we can return that as our range
         elif len(patches) == 2:
             return patches[0], patches[1]
         # If there is just one patch left then we return None as it goes to the end of the list
         elif len(patches) == 1:
             return None
+            # If the stamp is less than the timestamp then search the right side of the list
+        elif stamp < timestamp:
+            patches = patches[midpoint:]
+            return Search.forInsert(patches, stamp)
+        # If the stamp is greater than the timestamp then search the left side of the list
+        elif stamp > timestamp:
+            patches = patches[:midpoint]
+            return Search.forInsert(patches, stamp)
 
     @staticmethod
     def forPatch(patches: list[dict[str, Union[str, list[str]]]], stamp: int) -> Union[
         dict[str, Union[str, list[str]]], None]:
-        midpoint = int(math.ceil(len(patches) / 2))
+        midpoint = int(math.ceil(len(patches) / 2)) - 1
 
         # Get the patch at the midpoint and its timestamp
         patch = patches[midpoint]
-        timestamp = int(bytes.fromhex(patch['id'].split('-')[0]).decode('utf-8'))
+        timestamp = Conversion.fromHexPatchStamp(patch['id'])
 
         # If the timestamp is equal to the stamp then return the patch
         if timestamp == stamp:
             return patch
-        # If the timestamp is less than the stamp then search the right side of the list
-        elif timestamp < stamp:
-            patches = patches[midpoint:]
-            return Search.forPatch(patches, stamp)
-        # If the timestamp is greater than the stamp then search the left side of the list
-        elif timestamp > stamp:
-            patches = patches[:midpoint]
-            return Search.forPatch(patches, stamp)
         # If there are two patches left then check the one that wasn't just checked
         elif len(patches) == 2:
-            patch = patches[0]
-            timestamp = int(bytes.fromhex(patch['id'].split('-')[0]).decode('utf-8'))
+            if midpoint == 0:
+                patch = patches[1]
+            else:
+                patch = patches[0]
+            timestamp = Conversion.fromHexPatchStamp(patch['id'])
             if timestamp == stamp:
                 return patch
+        # If the stamp is less than the timestamp then search the right side of the list
+        elif stamp < timestamp:
+            patches = patches[midpoint:]
+            return Search.forPatch(patches, stamp)
+        # If the stamp is greater than the timestamp then search the left side of the list
+        elif stamp > timestamp:
+            patches = patches[:midpoint]
+            return Search.forPatch(patches, stamp)
 
         # If the patch is not found then return None
         return None

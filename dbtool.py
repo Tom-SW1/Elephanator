@@ -65,7 +65,7 @@ for i in range(1, len(args)):
         raise Exception('Invalid arguments: Arguments must be in the form of --key value')
 
 # Route the operation to the appropriate function
-
-print(data)
 if data['operation'] == 'addpatch':
     Patch.add(data)
+else:
+    raise Exception(f'Invalid operation: {data["operation"]}')

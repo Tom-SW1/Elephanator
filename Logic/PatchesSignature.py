@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Union
 
 from Logic.Cryptography import Cryptography
+from Logic.Conversion import Conversion
 from Logic.Sort import Sort
 
 class PatchesSignature:
@@ -70,14 +71,14 @@ class PatchesSignature:
             cutoff = None
             # first find the cutoff for the last local insert
             for patch in patches:
-                if int(bytes.fromhex(patch['id'].split('-')[0]).decode('utf-8')) == signature['lastLocalInsert']:
+                if Conversion.fromHexPatchStamp(patch['id']) == signature['lastLocalInsert']:
                     cutoff = patches.index(patch)
 
             # Now from this point use the timestamp to find the cutoff for the signature, but only run if the
             # timestamp is less than the local insert timestamp
             if signature['timestamp'] < signature['lastLocalInsert']:
                 for patch in patches[cutoff:]:
-                    if int(bytes.fromhex(patch['id'].split('-')[0]).decode('utf-8')) <= signature['timestamp']:
+                    if Conversion.fromHexPatchStamp(patch['id']) <= signature['timestamp']:
                         cutoff = patches.index(patch)
                         break
 
@@ -85,12 +86,16 @@ class PatchesSignature:
             if cutoff is None:
                 raise Exception('Malformed Patches: could not find cutoff for patches!')
 
-            newPatches = patches[:cutoff]
+            newPatches = patches[:cutoff][:-1]
+
+            # If there are no new patches then return
+            if len(newPatches) == 0:
+                return
 
             # Sort the patches, starting with the patches which are not larger than the original signature timestamp
             insertPatches = Sort.patchWithInsert(newPatches, patches[cutoff:], signature['timestamp'])
 
-            newPatches = Sort.patch(patches[:cutoff])
+            newPatches = Sort.patch(newPatches)
 
             # Prepend the new patches to the sorted patches
             patches = newPatches + insertPatches
@@ -105,6 +110,6 @@ class PatchesSignature:
         with open('patches.signature.json', 'w') as f:
             json.dump({
                 'timestamp': int(round(datetime.timestamp(datetime.now()) * 1000, 0)),
-                'lastLocalInsert': int(bytes.fromhex(patches[0]['id'].split('-')[0]).decode('utf-8')),
+                'lastLocalInsert': Conversion.fromHexPatchStamp(patches[0]['id']),
                 'signature': Cryptography.hashFile('patches.json')
             }, f)
