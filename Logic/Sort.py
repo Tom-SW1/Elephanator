@@ -1,7 +1,9 @@
+import copy
 from typing import Union
 from collections import deque
 
 from Logic.Search import Search
+from Logic.Conversion import Conversion
 
 class Sort:
     @staticmethod
@@ -18,16 +20,16 @@ class Sort:
         # Create a list of timestamps
         timestamps = []
         for patch in patches:
-            timestamps.append(int(bytes.fromhex(patch['id'].split('-')[0]).decode('utf-8')))
+            timestamps.append(Conversion.fromHexPatchStamp(patch['id']))
 
         # Sort the timestamps using timsort
-        timestamps.sort()
+        timestamps.sort(reverse=True)
 
         # Create a list of patches using the sorted timestamps
         sortedPatches = []
         for timestamp in timestamps:
             for patch in patches:
-                if int(bytes.fromhex(patch['id'].split('-')[0]).decode('utf-8')) == timestamp:
+                if Conversion.fromHexPatchStamp(patch['id']) == timestamp:
                     sortedPatches.append(patch)
                     break
 
@@ -48,14 +50,18 @@ class Sort:
         existingPatches = deque(patches)
 
         for newPatch in newPatches:
-            newStamp = int(bytes.fromhex(newPatch['id'].split('-')[0]).decode('utf-8'))
+            newStamp = Conversion.fromHexPatchStamp(newPatch['id'])
             # If the is less than the original signature timestamp then insert it into the existing patches
             if newStamp < stamp:
                 # Get the range of the existing patches to search
-                position = Search.forInsert(patches.copy(), newStamp)
+                patch = Search.forInsert(copy.deepcopy(patches), newStamp)
 
+                # Check if the patch should be appended to the end of the existing patches
+                if patch is None:
+                    existingPatches.append(newPatch)
                 # Insert the new patch into the existing patches
-                existingPatches.insert(position[1], newPatch)
+                else:
+                    existingPatches.insert(existingPatches.index(patch[1]), newPatch)
 
                 # Remove the new patch from the new patches
                 newPatches.remove(newPatch)

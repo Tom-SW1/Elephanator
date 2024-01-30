@@ -1,8 +1,10 @@
 import os
 import json
+import copy
 from typing import Union
 
 from Logic.Search import Search
+from Logic.Conversion import Conversion
 
 
 class ArgumentFactory:
@@ -61,29 +63,28 @@ class ArgumentFactory:
                 return patch
 
     @staticmethod
-    def findCircularDependency(self, patch: str, dependencies: list[str], source: list[str] = []) -> Union[str, None]:
+    def findCircularDependency(patch: str, dependencies: list[str], source: list[str] = [], patches: list[dict[str, Union[str, list[str]]]] = []) -> Union[str, None]:
         """
         Finds a circular dependency in a patch
-        :param self:
         :param patch: The patch to check
         :param dependencies: The dependencies of the original patch
         :param source: The source list of dependencies
         :return: The circular dependency or None
         """
 
-        # If the source list is empty then set it to the dependencies list by duplicating it
+        # If the patches list is empty then set the source list to the dependencies list by duplicating it
         isStart = False
-        if len(source) == 0:
-            source = dependencies.copy()
+        if len(patches) == 0:
+            source = copy.deepcopy(dependencies)
             isStart = True
 
-        # Get all patches from patches.json
-        with open('patches.json', 'r') as f:
-            patches = json.load(f)['patches']
+            # Get all patches from patches.json if not already loaded
+            with open('patches.json', 'r') as f:
+                patches: list = json.load(f)['patches']
 
         for dependency in source:
             # Get the timestamp for the patch
-            stamp = int(bytes.fromhex(dependency.split('-')[0]).decode('utf-8'))
+            stamp = Conversion.fromHexPatchStamp(dependency)
 
             # Check if the patch is in the dependencies list, but ensure it is not the patch it is checking
             if not isStart:
@@ -92,7 +93,7 @@ class ArgumentFactory:
                     return dependency
 
             # Search for the patch
-            patchInfo = Search.forPatch(patches.deepcopy(), stamp)
+            patchInfo = Search.forPatch(copy.deepcopy(patches), stamp)
 
             # Check if the patch exists
             if patchInfo is None:
@@ -101,10 +102,8 @@ class ArgumentFactory:
             # Set the patch name to the identifier
             patch = patchInfo['id']
 
-            # If the patch has no dependencies then return None
-            if len(patchInfo['dependencies']) == 0:
-                return None
-
             # Check if there is a circular dependency
             source = patchInfo['dependencies']
-            return self.findCircularDependency(patch, patchInfo['dependencies'], source)
+            depth = ArgumentFactory.findCircularDependency(patch, dependencies, source, patches)
+            if depth is not None:
+                return depth
