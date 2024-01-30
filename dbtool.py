@@ -4,6 +4,8 @@ import os
 
 from Logic.PatchesSignature import PatchesSignature
 from Logic.Commands.Patch import Patch
+from Logic.Commands.Init import Init
+from Logic.Commands.Execute import Execute
 
 # Configuration checks start here
 
@@ -66,6 +68,12 @@ for i in range(1, len(args)):
 
 # Route the operation to the appropriate function
 
-print(data)
 if data['operation'] == 'addpatch':
     Patch.add(data)
+elif data['operation'] == 'init':
+    Init.execute(data)
+elif data['operation'] == 'execute':
+    Execute.run()
+# Throw an error if the operation is not recognised
+else:
+    raise Exception('Invalid operation: Must be addpatch, init or execute')
