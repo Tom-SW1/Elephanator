@@ -1,9 +1,12 @@
 import math
 from typing import Union
 
+from Data.InstalledPatchesRepository import InstalledPatchesRepository
 from Logic.Conversion import Conversion
 
 class Search:
+    db = InstalledPatchesRepository()
+
     @staticmethod
     def forInsert(patches: list[dict[str, Union[str, list[str]]]], stamp: int) -> Union[tuple[dict[str, Union[str,
     list[str]]], dict[str, Union[str, list[str]]]], None]:
@@ -40,6 +43,12 @@ class Search:
     @staticmethod
     def forPatch(patches: list[dict[str, Union[str, list[str]]]], stamp: int) -> Union[
         dict[str, Union[str, list[str]]], None]:
+        """
+        Searches for a patch using a timestamp
+        :param patches:
+        :param stamp:
+        :return:
+        """
         midpoint = int(math.ceil(len(patches) / 2)) - 1
 
         # Get the patch at the midpoint and its timestamp
@@ -69,3 +78,33 @@ class Search:
 
         # If the patch is not found then return None
         return None
+
+    @staticmethod
+    def forDependencies(patches: list[dict[str, Union[str, list[str]]]], patch: str, execution: list[str] = []) -> list[str]:
+        """
+        Searches for the dependencies of a patch
+        :param patches:
+        :param patch:
+        :param execution:
+        :return:
+        """
+        patchInfo = Search.forPatch(patches, Conversion.fromHexPatchStamp(patch))
+
+        # If the patch is not found then raise an exception
+        if patchInfo is None:
+            raise Exception(f'Patch does not exist: {patch}')
+
+        # Check if the patch has already been executed
+        if Search.db.select(patch) is not None:
+            return execution
+
+        # Prepend to the execution list
+        execution = patchInfo['dependencies'] + execution
+
+        # If there are no more dependencies than return the execution list
+        if len(patchInfo['dependencies']) == 0:
+            return execution
+
+        # Recurse through the dependencies
+        for dependency in patchInfo['dependencies']:
+            execution = Search.forDependencies(patches, dependency, execution)
