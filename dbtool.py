@@ -21,13 +21,6 @@ if not os.path.exists('patches.json'):
 if not os.path.exists('patches.signature.json'):
     PatchesSignature.updateSignature()
 
-# Retrieve appsettings.json and set environment variables
-if os.path.exists('appsettings.json'):
-    with open('appsettings.json', 'r') as f:
-        appsettings = json.load(f)
-        for key in appsettings:
-            os.environ[key] = appsettings[key]
-
 # Check if the signature of patches.json has changed due to a git pull
 if PatchesSignature.hasDifferentSignature():
     # If it has changed, so ensure the patches are sorted by timestamp and the signature is updated
