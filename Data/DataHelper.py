@@ -1,4 +1,4 @@
-import os
+import json
 import psycopg2
 
 from typing import Union
@@ -6,8 +6,14 @@ from typing import Union
 
 class DataHelper:
     def __init__(self):
-        # Get connection string from environment variables, if it exists
-        connectionString = os.getenv('connectionString')
+        # Get connection string from app settings
+        connectionString = None
+        try:
+            with open('appsettings.json', 'r') as f:
+                appsettings = json.load(f)
+                connectionString = appsettings['connectionString'].replace(';', ' ')
+        except:
+            pass
 
         # If it doesn't exist throw an error
         if connectionString is None:

@@ -18,9 +18,12 @@ class InstalledPatchesRepository:
         ''', (id, patchDate))
 
     def build(self) -> None:
-        self.db.execute('''
-            CREATE TABLE IF NOT EXISTS InstalledPatches (
-                PatchID TEXT PRIMARY KEY,
-                PatchDate TIMESTAMP NOT NULL
-            );
-        ''', ())
+        try:
+            self.db.execute('''
+                CREATE TABLE IF NOT EXISTS InstalledPatches (
+                    PatchID TEXT PRIMARY KEY,
+                    PatchDate TIMESTAMP NOT NULL
+                );
+            ''', ())
+        except:
+            pass

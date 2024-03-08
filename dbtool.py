@@ -1,4 +1,3 @@
-import json
 import sys
 import os
 
@@ -20,13 +19,6 @@ if not os.path.exists('patches.json'):
 # If the patches.signature file does not exist then create it, and assign a stamp and signature
 if not os.path.exists('patches.signature.json'):
     PatchesSignature.updateSignature()
-
-# Retrieve appsettings.json and set environment variables
-if os.path.exists('appsettings.json'):
-    with open('appsettings.json', 'r') as f:
-        appsettings = json.load(f)
-        for key in appsettings:
-            os.environ[key] = appsettings[key]
 
 # Check if the signature of patches.json has changed due to a git pull
 if PatchesSignature.hasDifferentSignature():
