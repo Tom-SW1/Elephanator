@@ -1,12 +1,9 @@
 import math
 from typing import Union
 
-from Data.InstalledPatchesRepository import InstalledPatchesRepository
 from Logic.Conversion import Conversion
 
 class Search:
-    db = InstalledPatchesRepository()
-
     @staticmethod
     def forInsert(patches: list[dict[str, Union[str, list[str]]]], stamp: int) -> Union[tuple[dict[str, Union[str,
     list[str]]], dict[str, Union[str, list[str]]]], None]:
@@ -80,7 +77,7 @@ class Search:
         return None
 
     @staticmethod
-    def forDependencies(patches: list[dict[str, Union[str, list[str]]]], patch: str, execution: list[str] = []) -> list[str]:
+    def forDependencies(patches: list[dict[str, Union[str, list[str]]]], patch: str, execution: list[str]) -> list[str]:
         """
         Searches for the dependencies of a patch
         :param patches:
@@ -94,10 +91,6 @@ class Search:
         if patchInfo is None:
             raise Exception(f'Patch does not exist: {patch}')
 
-        # Check if the patch has already been executed
-        if Search.db.select(patch) is not None:
-            return execution
-
         # Prepend to the execution list
         execution = patchInfo['dependencies'] + execution
 
@@ -108,3 +101,5 @@ class Search:
         # Recurse through the dependencies
         for dependency in patchInfo['dependencies']:
             execution = Search.forDependencies(patches, dependency, execution)
+
+        return execution

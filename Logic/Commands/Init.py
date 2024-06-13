@@ -1,5 +1,3 @@
-import json
-
 from Models import InitSystemSchema
 from Logic.ArgumentFactory import ArgumentFactory
 

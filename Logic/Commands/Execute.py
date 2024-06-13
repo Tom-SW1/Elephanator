@@ -18,10 +18,6 @@ class Execute:
         # Format the arguments, also validates the arguments using the schema
         args = ArgumentFactory.format(ExecutePatchesSchema.schema, data['arguments'])
 
-        # Check that a connection string has been provided
-        if os.getenv('connectionString') is None:
-            raise Exception('No connection string found! Add one using: python dbtool.py --init --connectionstring <connection string>')
-
         # Build the datahelper using the connection string
         installedPatchesRepository = InstalledPatchesRepository()
         db = DataHelper()
@@ -48,43 +44,44 @@ class Execute:
             if not(patch in os.listdir('patches')):
                 raise Exception(f'Patch does not exist -> {args["patch"]}')
 
-            execution = Search.forDependencies(patches, args['patch'])
+            execution = Search.forDependencies(patches, args['patch'], execution)
         # Find all the patches that haven't been executed
         else:
             for patch in patches:
                 if installedPatchesRepository.select(patch['id']) is None:
-                    execution = Search.forDependencies(patches, patch['id'], execution)
+                    execution = Search.forDependencies(patches, patch['id'], execution) + [patch['id']] + execution
 
         # Execute the patches
         for patch in execution:
             # Check if the patch has been executed
             if installedPatchesRepository.select(patch) is not None:
                 print(f'Patch requirement already satisfied -> {patch}')
+            else:
+                # Execute the patch
+                print(f'Executing patch -> {patch}')
 
-            # Execute the patch
-            print(f'Executing patch -> {patch}')
+                # Get files within the patch
+                files = os.listdir(f'patches/{patch}')
 
-            # Get files within the patch
-            files = os.listdir(f'patches/{patch}')
+                # Execute the files in the patch
+                for file in files:
+                    try:
+                        with open(f'patches/{patch}/{file}', 'r') as f:
+                            query = f.read()
 
-            # Execute the files in the patch
-            for file in files:
-                try:
-                    with open(f'patches/{patch}/{file}', 'r') as f:
-                        query = f.read()
+                        # Split the query into individual queries
+                        queries = query.split(';')
+                        for q in queries:
+                            if len(q) > 0:
+                                db.execute(q + ";")
+                    except Exception as e:
+                        print(f'Error executing file: {patch}/{file} -> {e}')
 
-                    # Split the query into individual queries
-                    queries = query.split(';')
-                    for q in queries:
-                        db.execute(q + ";")
-                except Exception as e:
-                    print(f'Error executing file: {patch}/{file} -> {e}')
+                # Insert the patch into the InstalledPatches table
+                installedPatchesRepository.insert(patch, datetime.now())
 
-            # Insert the patch into the InstalledPatches table
-            installedPatchesRepository.insert(patch, int(datetime.timestamp(datetime.now()) * 1000))
-
-            # Notify the user that the patch has been executed
-            print(f'Patch executed -> {patch}')
+                # Notify the user that the patch has been executed
+                print(f'Patch executed -> {patch}')
 
         # Notify the user that the patches have been executed
         print('All patches executed!')

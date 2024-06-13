@@ -28,5 +28,5 @@ class DataHelper:
         self.db.execute(query, params)
         return self.db.fetchone()
 
-    def execute(self, query: str, params: tuple) -> None:
+    def execute(self, query: str, params: tuple = ()) -> None:
         self.db.execute(query, params)
