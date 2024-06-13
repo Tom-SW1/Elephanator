@@ -1,4 +1,5 @@
 import sys
+import json
 import os
 
 from Logic.PatchesSignature import PatchesSignature
@@ -15,6 +16,32 @@ if not os.path.exists('patches'):
 if not os.path.exists('patches.json'):
     with open('patches.json', 'w') as f:
         f.write('{"patches": []}')
+
+# Ensure there is an appsettings.json file
+if not os.path.exists('appsettings.json'):
+    with open('appsettings.json', 'w') as f:
+        f.write('{"connectionString": null}')
+
+# Check the appsettings.json to ensure it has a connectionString, then prompt the user to enter one
+with open('appsettings.json', 'r') as f:
+    data = json.load(f)
+    if data['connectionString'] is None:
+        # Prompt the user to enter the connection string
+        print("Required format: 'host=***;port=5432;dbname=***;user=***;password=***;'")
+        print('Please enter the connection string for the database:')
+        data['connectionString'] = input()
+
+        # Write the connection string to the appsettings.json file
+        with open('appsettings.json', 'w') as f:
+            f.write(f'{{"connectionString": "{data["connectionString"]}"}}')
+
+    # Add the connection string to the environment variables
+    os.environ['connectionString'] = data['connectionString']
+
+# Ensure each patch directory has a test folder TODO: Implement unit tests
+for patch in os.listdir('patches'):
+    if not os.path.exists(f'patches/{patch}/test'):
+        os.makedirs(f'patches/{patch}/test')
 
 # If the patches.signature file does not exist then create it, and assign a stamp and signature
 if not os.path.exists('patches.signature.json'):
@@ -65,7 +92,7 @@ if data['operation'] == 'addpatch':
 elif data['operation'] == 'init':
     Init.execute(data)
 elif data['operation'] == 'execute':
-    Execute.run()
+    Execute.run(data)
 # Throw an error if the operation is not recognised
 else:
     raise Exception('Invalid operation: Must be addpatch, init or execute')

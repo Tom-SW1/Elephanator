@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from Data.DataHelper import DataHelper
 
 class InstalledPatchesRepository:
@@ -12,7 +14,7 @@ class InstalledPatchesRepository:
             SELECT * FROM InstalledPatches WHERE PatchID = %s;
         ''', (id,))
 
-    def insert(self, id: str, patchDate: int) -> None:
+    def insert(self, id: str, patchDate: datetime) -> None:
         self.db.execute('''
             INSERT INTO InstalledPatches (PatchID, PatchDate) VALUES (%s, %s);
         ''', (id, patchDate))
