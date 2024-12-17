@@ -8,3 +8,6 @@ __pycache__
 
 # Settings for the app
 appsettings.json
+
+# Ignore macOS system files
+.DS_Store
