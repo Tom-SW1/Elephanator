@@ -6,8 +6,5 @@ venv
 __pycache__
 *.pyc
 
-# Patch signature
-patches.signature.json
-
 # Settings for the app
 appsettings.json
