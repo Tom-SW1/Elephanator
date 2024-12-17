@@ -7,20 +7,12 @@ from typing import Union
 class DataHelper:
     def __init__(self):
         # Get connection string from app settings
-        connectionString = None
-        try:
-            with open('appsettings.json', 'r') as f:
-                appsettings = json.load(f)
-                connectionString = appsettings['connectionString'].replace(';', ' ')
-        except:
-            pass
-
-        # If it doesn't exist throw an error
-        if connectionString is None:
-            raise Exception('No connection string found! Add one using: python dbtool.py --init --connectionstring <connection string>')
+        with open('appsettings.json', 'r') as f:
+            data = json.load(f)
+            connectionString = data['connectionString']
 
         # Connect to the database
-        conn = psycopg2.connect(connectionString)
+        conn = psycopg2.connect(connectionString.replace(';', ' '))
         conn.autocommit = True
         self.db = conn.cursor()
 
