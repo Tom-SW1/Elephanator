@@ -1,71 +1,59 @@
 import sys
 import os
 
-from Logic.PatchesSignature import PatchesSignature
-from Logic.Commands.Patch import Patch
-from Logic.Commands.Init import Init
-from Logic.Commands.Execute import Execute
+from Logic.Initialisation import Initialisation
+from Logic.Patches import Patches
 
-# Configuration checks start here
-
-# Ensure patches.json and patches folder exist, if not, create them
-if not os.path.exists('patches'):
-    os.makedirs('patches')
-
-if not os.path.exists('patches.json'):
-    with open('patches.json', 'w') as f:
-        f.write('{"patches": []}')
-
-# If the patches.signature file does not exist then create it, and assign a stamp and signature
-if not os.path.exists('patches.signature.json'):
-    PatchesSignature.updateSignature()
-
-# Check if the signature of patches.json has changed due to a git pull
-if PatchesSignature.hasDifferentSignature():
-    # If it has changed, so ensure the patches are sorted by timestamp and the signature is updated
-    PatchesSignature.updateSignatureWithSort()
-
-# Command processing starts here
+# Print help message
+def print_help():
+    """
+    Prints the help message
+    :return: None
+    """
+    print("""Invalid arguments!
+    Commands:
+        python dbtool.py --init --connectionstring "<connection string>" => Initialise the database with a connection string
+        python dbtool.py --addpatch --name <patch name> => Add a database patch
+        python dbtool.py --execute => Execute the database patches
+            """)
 
 # Get command line arguments
 args = sys.argv
 
-# Map the operation and arguments onto a dictionary
-data = {
-    'operation': None,
-    'arguments': {}
-}
+# Install Pip dependencies through the requirements.txt file
+os.system('pip install -r requirements.txt')
 
-lastKey = None
-for i in range(1, len(args)):
-    try:
-        # If the file ends with .py then ignore it
-        if args[i].endswith('.py'):
-            continue
+# Check if the command is an initialisation command
+if len(args) == 4:
+    if args[1] == '--init':
+        # Check if the command is an initialisation command with a connection string
+        if args[2] == '--connectionstring':
+            # Run the connection string initialisation
+            Initialisation.connection_string(args[3])
+
+# Run the initialisation checks
+init_error = False
+try:
+    Initialisation.execute()
+except Exception as e:
+    init_error = True
+    print(e)
+
+if not init_error:
+    # Add patch command
+    if len(args) >= 4:
+        if args[1] == '--addpatch' and args[2] == '--name':
+            Patches.create_patch(' '.join(args[3:]))
         else:
-            # If the operation is None then set it to the current argument
-            if data['operation'] is None:
-                data['operation'] = args[i].strip('-').lower()
-            # Otherwise process it as an argument
-            else:
-                # If the value starts with -- then it is a key, so add it to the dictionary
-                if args[i].startswith('--'):
-                    lastKey = args[i].strip('-').lower()
-                    data['arguments'][lastKey] = []
-                # Otherwise, add the value to the last key
-                else:
-                    data['arguments'][lastKey].append(args[i])
-    except:
-        raise Exception('Invalid arguments: Arguments must be in the form of --key value')
-
-# Route the operation to the appropriate function
-
-if data['operation'] == 'addpatch':
-    Patch.add(data)
-elif data['operation'] == 'init':
-    Init.execute(data)
-elif data['operation'] == 'execute':
-    Execute.run()
-# Throw an error if the operation is not recognised
-else:
-    raise Exception('Invalid operation: Must be addpatch, init or execute')
+            print_help()
+    # Execute command
+    elif len(args) >= 2:
+        if args[1] == '--execute':
+            Patches.execute()
+        # Ignore --init commands
+        elif args[1] == '--init':
+            pass
+        else:
+            print_help()
+    else:
+        print_help()
