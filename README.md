@@ -9,12 +9,18 @@ Additionally, Elephanator is compatible with the production server, allowing dev
 ```
 python dbtool.py --init --connectionstring "<connection string>"
 ```
-_**Note:** This command must be executed before you use the software_
+_This command must be executed before you use the software_
 
 **Add a database patch.**
 ```
 python dbtool.py --addpatch --name <patch name>
 ```
+
+**Compile all patches into one single `.sql` file**
+```
+python dbtool.py --compile
+```
+_This command should be used to assist with unit testing._
 
 **Execute all database patches.**
 ```

@@ -48,8 +48,12 @@ if not init_error:
             print_help()
     # Execute command
     elif len(args) >= 2:
+        # Execute patches command
         if args[1] == '--execute':
             Patches.execute()
+        # Compile patches command
+        elif args[1] == '--compile':
+            Patches.compile()
         # Ignore --init commands
         elif args[1] == '--init':
             pass
