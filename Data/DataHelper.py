@@ -12,9 +12,9 @@ class DataHelper:
             connectionString = data['connectionString']
 
         # Connect to the database
-        conn = psycopg2.connect(connectionString.replace(';', ' '))
-        conn.autocommit = True
-        self.db = conn.cursor()
+        self.conn = psycopg2.connect(connectionString.replace(';', ' '))
+        self.conn.autocommit = False
+        self.db = self.conn.cursor()
 
     def selectFirstWithParams(self, query: str, params: tuple) -> Union[tuple, None]:
         self.db.execute(query, params)
@@ -22,3 +22,6 @@ class DataHelper:
 
     def execute(self, query: str, params: tuple = ()) -> None:
         self.db.execute(query, params)
+
+    def commit(self):
+        self.conn.commit()

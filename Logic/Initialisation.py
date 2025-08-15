@@ -55,6 +55,7 @@ class Initialisation:
         # Insert the installed_patches table if it doesn't exist
         dh = DataHelper()
         dh.execute('CREATE TABLE IF NOT EXISTS installed_patches (patch_id TEXT PRIMARY KEY, patch_date TIMESTAMPTZ NOT NULL);')
+        dh.commit()
 
         # Create patches directory if it doesn't exist
         if not os.path.exists('patches'):

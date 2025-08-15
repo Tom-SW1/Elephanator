@@ -1,5 +1,4 @@
 import sys
-import os
 
 from Logic.Initialisation import Initialisation
 from Logic.Patches import Patches
@@ -15,13 +14,11 @@ def print_help():
         python dbtool.py --init --connectionstring "<connection string>" => Initialise the database with a connection string
         python dbtool.py --addpatch --name <patch name> => Add a database patch
         python dbtool.py --execute => Execute the database patches
+        python dbtool.py --compile => Compile the database patches into one .sql file
             """)
 
 # Get command line arguments
 args = sys.argv
-
-# Install Pip dependencies through the requirements.txt file
-os.system('pip install -r requirements.txt')
 
 # Check if the command is an initialisation command
 if len(args) == 4:
@@ -48,8 +45,12 @@ if not init_error:
             print_help()
     # Execute command
     elif len(args) >= 2:
+        # Execute patches command
         if args[1] == '--execute':
             Patches.execute()
+        # Compile patches command
+        elif args[1] == '--compile':
+            Patches.compile()
         # Ignore --init commands
         elif args[1] == '--init':
             pass
